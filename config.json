@@ -14,7 +14,7 @@
       },
       "commerce-b2b-enabled": false,
       "commerce-companies-enabled": false,
-      "commerce-assets-enabled": true,
+      "commerce-assets-enabled": false,
       "adobe-commerce-optimizer": false,
       "analytics": {
         "base-currency-code": "USD",
