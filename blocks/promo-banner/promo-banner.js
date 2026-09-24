@@ -2,31 +2,33 @@ import { readBlockConfig } from '../../scripts/aem.js';
 import { CS_FETCH_GRAPHQL, getProductLink } from '../../scripts/commerce.js';
 
 async function fetchCategoryProducts (categoryId, maxProducts) {
-  const query = `
-    query GetCategoryProducts($categoryId: String!, $pageSize: Int!) {
-      productSearch(
-        phrase: ""
-        filter: [{ attribute: "categoryIds", eq: $categoryId }]
-        page_size: $pageSize
-      ) {
-        items {
-          productView {
-            name
-            sku
-            urlKey
-            images(roles: ["image"]) {
-              url
-              label
+    const query = `
+        query GetCategoryProducts($categoryId: String!, $pageSize: Int!) {
+        productSearch(
+            phrase: ""
+            filter: [{ attribute: "categoryIds", eq: $categoryId }]
+            page_size: $pageSize
+        ) {
+            items {
+            productView {
+                name
+                sku
+                urlKey
+                images(roles: ["image"]) {
+                url
+                label
+                }
+                ... on SimpleProductView {
+                price {
+                    final { amount { value currency } }
+                    regular { amount { value currency } }
+                }
+                }
             }
-            price {
-              final { amount { value currency } }
-              regular { amount { value currency } }
             }
-          }
         }
-      }
-    }
-  `;
+        }
+    `;
 
   const { data } = await CS_FETCH_GRAPHQL.fetchGraphQl(query, {
     variables: { categoryId, pageSize: maxProducts },
