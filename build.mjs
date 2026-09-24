@@ -12,18 +12,18 @@ overrideGQLOperations([
     skipFragments: ['DOWNLOADABLE_ORDER_ITEMS_FRAGMENT'],
     operations: [],
   },
-  // {
-  //   npm: '@dropins/storefront-checkout',
-  //   operations: [],
-  // },
-  // {
-  //   npm: '@dropins/storefront-pdp',
-  //   operations: [
-  //     `
-  //     fragment PRODUCT_FRAGMENT on ProductView {
-  //       lowStock
-  //     }
-  //     `,
-  //   ],
-  // },
+  {
+    npm: '@dropins/storefront-checkout',
+    operations: [],
+  },
+  {
+    npm: '@dropins/storefront-pdp',
+    operations: [
+      `
+      fragment PRODUCT_FRAGMENT on ProductView {
+        metaTitle
+      }
+      `,
+    ],
+  },
 ]);

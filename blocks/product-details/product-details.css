@@ -116,6 +116,25 @@
   }
 }
 
+.pdp-tagline {
+  font-size: 1.5rem;
+  color: #2d7d2d;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.product-details__stock {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+.stock-badge--in-stock {
+  color: #2d7d2d;
+}
+.stock-badge--out-of-stock {
+  color: #cc0000;
+}
+
 .product-details__add-to-cart-status {
   position: absolute;
   clip-path: inset(50%);
@@ -126,4 +145,13 @@
   border: 0;
   overflow: hidden;
   white-space: nowrap;
+}
+
+.custom-attribute dt {
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+.custom-attribute dd {
+  margin-left: 0;
+  color: #444;
 }
