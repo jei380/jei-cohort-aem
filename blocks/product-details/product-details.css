@@ -31,6 +31,17 @@
   margin-top: var(--spacing-medium);
 }
 
+.product-details__discount-percent {
+  margin-top: 0.25rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2d7d2d;
+}
+
+.product-details-discount--hidden {
+  display: none;
+}
+
 .product-details__gallery .pdp-carousel {
   max-height: 60vh;
 }

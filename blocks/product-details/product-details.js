@@ -95,6 +95,26 @@ function normalizeTierClass(tierThreshold) {
   return '';
 }
 
+function normalizeDiscountPercent(discountPercent) {
+  const value = Number(discountPercent);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return Math.ceil(value);
+}
+
+function renderDiscountPercent(discountPercent, $discountPercent) {
+  if (!$discountPercent) return;
+
+  const normalizedPercent = normalizeDiscountPercent(discountPercent);
+  if (normalizedPercent == null) {
+    $discountPercent.textContent = '';
+    $discountPercent.className = 'product-details__discount-percent product-details-discount--hidden';
+    return;
+  }
+
+  $discountPercent.textContent = `${normalizedPercent}% off`;
+  $discountPercent.className = 'product-details__discount-percent';
+}
+
 function renderBadgeElements(badgeText, tierThreshold, $badge, $badgeMobile) {
   const resolvedBadge = badgeText?.trim?.();
   const tierClass = normalizeTierClass(tierThreshold);
@@ -154,7 +174,12 @@ async function fetchMeshBadgeBySku(sku) {
       badgeText: result?.deepDiscountBadge?.trim?.()
         || result?.body?.deepDiscountBadge?.trim?.()
         || '',
-      tierThreshold: result?.tierThreshold
+      discountPercent: result?.discountPercent
+        ?? result?.body?.discountPercent
+        ?? null,
+      tierThreshold: result?.tierRank
+        ?? result?.body?.tierRank
+        ?? result?.tierThreshold
         ?? result?.body?.tierThreshold
         ?? null,
     };
@@ -174,17 +199,24 @@ async function fetchMeshBadgeBySku(sku) {
   }
 }
 
-async function updateBadgeFromSources(productData, $badge, $badgeMobile) {
+async function updateBadgeFromSources(productData, $badge, $badgeMobile, $discountPercent) {
   renderBadgeElements(
     productData?.deepDiscountBadge,
     productData?.tierThreshold,
     $badge,
     $badgeMobile,
   );
+  renderDiscountPercent(productData?.discountPercent, $discountPercent);
 
   const meshBadge = await fetchMeshBadgeBySku(productData?.sku);
-  if (meshBadge?.badgeText) {
-    renderBadgeElements(meshBadge.badgeText, meshBadge.tierThreshold, $badge, $badgeMobile);
+  if (meshBadge?.badgeText || normalizeDiscountPercent(meshBadge?.discountPercent) != null) {
+    renderBadgeElements(
+      meshBadge.badgeText,
+      meshBadge.tierThreshold,
+      $badge,
+      $badgeMobile,
+    );
+    renderDiscountPercent(meshBadge.discountPercent, $discountPercent);
   }
 }
 
@@ -218,6 +250,7 @@ export default async function decorate(block) {
         <div class="product-details__tagline pdp-tagline" aria-label="Promotional offer"></div>
         <div class="product-details__stock" role="status" aria-live="polite"></div>
         <div class="product-details__price"></div>
+  <div class="product-details__discount-percent product-details-discount--hidden"></div>
         <div class="product-details__badge"></div>
         <div class="product-details__gallery"></div>
         <div class="product-details__short-description"></div>
@@ -245,6 +278,7 @@ export default async function decorate(block) {
   const $tagline = fragment.querySelector('.product-details__tagline');
   const $stock = fragment.querySelector('.product-details__stock');
   const $price = fragment.querySelector('.product-details__price');
+  const $discountPercent = fragment.querySelector('.product-details__discount-percent');
   const $badgeMobile = fragment.querySelector('.product-details__right-column .product-details__badge');
   const $galleryMobile = fragment.querySelector('.product-details__right-column .product-details__gallery');
   const $shortDescription = fragment.querySelector('.product-details__short-description');
@@ -269,7 +303,7 @@ export default async function decorate(block) {
 
   debugPdpBadge(product);
 
-  updateBadgeFromSources(product, $badge, $badgeMobile)
+  updateBadgeFromSources(product, $badge, $badgeMobile, $discountPercent)
     .catch((error) => {
       console.debug('[PDP DEBUG] failed to update badge from sources:', error);
     });
