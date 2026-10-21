@@ -103,6 +103,7 @@ export default async function decorate(block) {
     <div class="product-details__alert"></div>
     <div class="product-details__wrapper">
       <div class="product-details__left-column">
+        <div class="product-details__badge"></div>
         <div class="product-details__gallery"></div>
       </div>
       <div class="product-details__right-column">
@@ -110,6 +111,7 @@ export default async function decorate(block) {
         <div class="product-details__tagline pdp-tagline" aria-label="Promotional offer"></div>
         <div class="product-details__stock" role="status" aria-live="polite"></div>
         <div class="product-details__price"></div>
+        <div class="product-details__badge"></div>
         <div class="product-details__gallery"></div>
         <div class="product-details__short-description"></div>
         <div class="product-details__gift-card-options"></div>
@@ -130,11 +132,13 @@ export default async function decorate(block) {
   `);
 
   const $alert = fragment.querySelector('.product-details__alert');
+  const $badge = fragment.querySelector('.product-details__badge');
   const $gallery = fragment.querySelector('.product-details__gallery');
   const $header = fragment.querySelector('.product-details__header');
   const $tagline = fragment.querySelector('.product-details__tagline');
   const $stock = fragment.querySelector('.product-details__stock');
   const $price = fragment.querySelector('.product-details__price');
+  const $badgeMobile = fragment.querySelector('.product-details__right-column .product-details__badge');
   const $galleryMobile = fragment.querySelector('.product-details__right-column .product-details__gallery');
   const $shortDescription = fragment.querySelector('.product-details__short-description');
   const $options = fragment.querySelector('.product-details__options');
@@ -156,6 +160,17 @@ export default async function decorate(block) {
     $tagline.textContent = 'Free shipping on orders over $50';
   }
 
+  const badgeValue = product.deepDiscountBadge
+  if ($badge) {
+    $badge.textContent = badgeValue;
+    $badge.className = 'product-details__badge product-details-badge--badge-default';
+  }
+
+  if ($badgeMobile) {
+    $badgeMobile.textContent = badgeValue;
+    $badgeMobile.className = 'product-details__badge product-details-badge--badge-mobile';
+  }
+
   events.on('pdp/data', (product) => {
     if (!product) return;
     if (product.inStock) {
@@ -169,11 +184,18 @@ export default async function decorate(block) {
     if (value) {
       $customAttribute.innerHTML = `
       <div class="custom-attribute">
-      <dt>Product Title</dt>
+      <dt>Product Title!!!!!!</dt>
       <dd>${value}</dd>
       </div>
       `;
     }
+    // const badgeValue = product.deepDiscountBadge;
+    // if (badgeValue) {
+    //   $badge.textContent = badgeValue;
+    //   $badge.className = 'product-details__badge product-details-badge--badge-default';
+    //   $badgeMobile.textContent = badgeValue;
+    //   $badgeMobile.className = 'product-details__badge product-details-badge--badge-mobile';
+    // }
   }, { eager: true });
 
   const gallerySlots = {

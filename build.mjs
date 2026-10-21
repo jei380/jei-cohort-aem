@@ -22,6 +22,9 @@ overrideGQLOperations([
       `
       fragment PRODUCT_FRAGMENT on ProductView {
         metaTitle
+        ... on SimpleProductView {
+          deepDiscountBadge
+        }
       }
       `,
     ],
