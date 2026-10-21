@@ -154,18 +154,37 @@
   color: #fff;
   font-weight: 800;
   font-size: 3rem;
-  border: 2px solid #e658df;
-  background-color: #e658df;
+  border: 2px solid #2d7d2d;
+  background-color: #2d7d2d;
 }
 
 .product-details-badge--badge-mobile {
   color: #fff;
   font-weight: 800;
   font-size: 1.5rem;
-  border: 2px solid #46bfbf;
-  background-color: #46bfbf;
+  border: 2px solid #2d7d2d;
+  background-color: #2d7d2d;
   padding: 0.2rem 0.25rem;
   float: right
+}
+
+.product-details-badge--tier-1 {
+  border-color: #2d7d2d;
+  background-color: #2d7d2d;
+}
+
+.product-details-badge--tier-2 {
+  border-color: #d97706;
+  background-color: #d97706;
+}
+
+.product-details-badge--tier-3 {
+  border-color: #c62828;
+  background-color: #c62828;
+}
+
+.product-details-badge--hidden {
+  display: none;
 }
 
 .product-details__add-to-cart-status {

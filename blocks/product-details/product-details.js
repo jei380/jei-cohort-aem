@@ -38,6 +38,12 @@ import { IMAGES_SIZES } from '../../scripts/initializers/pdp.js';
 import '../../scripts/initializers/cart.js';
 import '../../scripts/initializers/wishlist.js';
 
+const BADGING_ACTION_ENDPOINT = window.AEM_BADGING_ACTION_ENDPOINT
+  || 'https://3967933-237champagnecicada-stage.adobeioruntime.net/api/v1/web/course-labs/product-badging?sku=';
+const meshBadgeCache = new Map();
+const MESH_BADGE_TIMEOUT_MS = 3500;
+const ENABLE_BADGE_FETCH = true;
+
 /**
  * Checks if the page has prerendered product JSON-LD data
  * @returns {boolean} True if product JSON-LD exists and contains @type=Product
@@ -79,6 +85,107 @@ function formatNumericAttributeValue(value) {
   const trimmed = value.trim();
   if (!/^[+-]?\d+(\.\d+)?$/.test(trimmed)) return value;
   return new Intl.NumberFormat(document.documentElement.lang).format(Number(trimmed));
+}
+
+function normalizeTierClass(tierThreshold) {
+  const tier = Number(tierThreshold);
+  if (tier === 1) return 'product-details-badge--tier-1';
+  if (tier === 2) return 'product-details-badge--tier-2';
+  if (tier === 3) return 'product-details-badge--tier-3';
+  return '';
+}
+
+function renderBadgeElements(badgeText, tierThreshold, $badge, $badgeMobile) {
+  const resolvedBadge = badgeText?.trim?.();
+  const tierClass = normalizeTierClass(tierThreshold);
+
+  if (!resolvedBadge) {
+    if ($badge) {
+      $badge.textContent = '';
+      $badge.className = 'product-details__badge product-details-badge--hidden';
+    }
+
+    if ($badgeMobile) {
+      $badgeMobile.textContent = '';
+      $badgeMobile.className = 'product-details__badge product-details-badge--hidden';
+    }
+    return;
+  }
+
+  if ($badge) {
+    $badge.textContent = resolvedBadge;
+    $badge.className = `product-details__badge product-details-badge--badge-default ${tierClass}`.trim();
+  }
+
+  if ($badgeMobile) {
+    $badgeMobile.textContent = resolvedBadge;
+    $badgeMobile.className = `product-details__badge product-details-badge--badge-mobile ${tierClass}`.trim();
+  }
+}
+
+async function fetchMeshBadgeBySku(sku) {
+  if (!ENABLE_BADGE_FETCH) return '';
+  if (!sku) return '';
+  if (meshBadgeCache.has(sku)) return meshBadgeCache.get(sku);
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), MESH_BADGE_TIMEOUT_MS);
+
+    const response = await fetch(`${BADGING_ACTION_ENDPOINT}${encodeURIComponent(sku)}`, {
+      method: 'GET',
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const emptyResult = {
+        badgeText: '',
+        tierThreshold: null,
+      };
+      meshBadgeCache.set(sku, emptyResult);
+      return emptyResult;
+    }
+
+    const result = await response.json();
+
+    const resolvedResult = {
+      badgeText: result?.deepDiscountBadge?.trim?.()
+        || result?.body?.deepDiscountBadge?.trim?.()
+        || '',
+      tierThreshold: result?.tierThreshold
+        ?? result?.body?.tierThreshold
+        ?? null,
+    };
+    meshBadgeCache.set(sku, resolvedResult);
+    return resolvedResult;
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      console.debug('[PDP DEBUG] action badging request timed out');
+    }
+    console.debug('[PDP DEBUG] action badging request failed:', error);
+    const emptyResult = {
+      badgeText: '',
+      tierThreshold: null,
+    };
+    meshBadgeCache.set(sku, emptyResult);
+    return emptyResult;
+  }
+}
+
+async function updateBadgeFromSources(productData, $badge, $badgeMobile) {
+  renderBadgeElements(
+    productData?.deepDiscountBadge,
+    productData?.tierThreshold,
+    $badge,
+    $badgeMobile,
+  );
+
+  const meshBadge = await fetchMeshBadgeBySku(productData?.sku);
+  if (meshBadge?.badgeText) {
+    renderBadgeElements(meshBadge.badgeText, meshBadge.tierThreshold, $badge, $badgeMobile);
+  }
 }
 
 export default async function decorate(block) {
@@ -160,17 +267,14 @@ export default async function decorate(block) {
     $tagline.textContent = 'Free shipping on orders over $50';
   }
 
-  const badgeValue = product.deepDiscountBadge
-  if ($badge) {
-    $badge.textContent = badgeValue;
-    $badge.className = 'product-details__badge product-details-badge--badge-default';
-  }
+  debugPdpBadge(product);
 
-  if ($badgeMobile) {
-    $badgeMobile.textContent = badgeValue;
-    $badgeMobile.className = 'product-details__badge product-details-badge--badge-mobile';
-  }
+  updateBadgeFromSources(product, $badge, $badgeMobile)
+    .catch((error) => {
+      console.debug('[PDP DEBUG] failed to update badge from sources:', error);
+    });
 
+  // eslint-disable-next-line no-shadow
   events.on('pdp/data', (product) => {
     if (!product) return;
     if (product.inStock) {
@@ -627,3 +731,19 @@ function imageSlotConfig(ctx) {
     },
   };
 }
+
+/* eslint-disable no-console */
+function debugPdpBadge(productData) {
+  // Toggle via URL: ?debugPdp=1
+  const debugEnabled = new URLSearchParams(window.location.search).get('debugPdp') === '1';
+  if (!debugEnabled) return;
+
+  console.group('[PDP DEBUG] pdp/data payload');
+  console.log('full product payload:', productData);
+  console.log('sku:', productData?.sku);
+  console.log('deepDiscountBadge (raw):', productData?.deepDiscountBadge);
+  console.log('deepDiscountBadge (type):', typeof productData?.deepDiscountBadge);
+  console.log('deepDiscountBadge (trimmed):', productData?.deepDiscountBadge?.trim?.());
+  console.groupEnd();
+}
+/* eslint-enable no-console */

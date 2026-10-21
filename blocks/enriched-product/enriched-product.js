@@ -2,6 +2,7 @@ import { readBlockConfig } from '../../scripts/aem.js';
 
 const MESH_ENDPOINT =
   'https://edge-sandbox-graph.adobe.io/api/aa4b8efe-f97a-4a9c-b724-345828578291/graphql';
+const ENABLE_MESH_ENRICHMENT_FETCH = false;
 
 function formatMoneyAmount (amount) {
   if (!amount || typeof amount.value !== 'number') return '';
@@ -20,6 +21,15 @@ function priceAmountFromCatalogProduct (product) {
 }
 
 async function fetchEnrichedProduct (sku) {
+  if (!ENABLE_MESH_ENRICHMENT_FETCH) {
+    return {
+      data: {
+        products: [],
+        Enrichment_getProductEnrichment: null,
+      },
+    };
+  }
+
   const query = `
     query GetEnrichedProduct($sku: String!) {
       products(skus: [$sku]) {
